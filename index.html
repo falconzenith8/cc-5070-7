@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gravity Lens · 异向重力摄像机姿态演示</title>
+  <link rel="stylesheet" href="/src/styles.css" />
+</head>
+<body>
+  <canvas id="scene" aria-label="三维重力镜头场景"></canvas>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">◉</span>
+      <div>
+        <h1>Gravity Lens <span>重力镜头</span></h1>
+        <p class="subtitle">异向重力表面行走 · 相机姿态与视野连续性</p>
+      </div>
+    </div>
+    <nav class="modes" role="tablist">
+      <button class="mode-btn active" data-mode="planet" role="tab">星球表面</button>
+      <button class="mode-btn" data-mode="chamber" role="tab">重力舱</button>
+      <button class="mode-btn" data-mode="scenario" role="tab">输入轨迹</button>
+    </nav>
+    <div class="scene-state" id="scene-state">—</div>
+  </header>
+
+  <aside class="panel controls">
+    <section class="group" id="grp-legend">
+      <h2>操作</h2>
+      <ul class="keys">
+        <li><b>拖拽</b> 观察（局部偏航/俯仰）</li>
+        <li><b>W A S D</b> 角色行走 / 转向</li>
+        <li><b>Q E</b> 原地旋转角色</li>
+        <li><b>滚轮</b> 摄像机臂长</li>
+      </ul>
+    </section>
+
+    <section class="group" id="grp-chamber">
+      <h2>重力方向</h2>
+      <div class="grid-btns" id="gravity-buttons"></div>
+      <p class="hint" id="gravity-hint">每个按钮对应一个真实表面法线；相机上方向由该法线计算。</p>
+      <label class="toggle">
+        <input type="checkbox" id="pole-toggle" />
+        <span>允许俯仰穿过极点（连续回退）</span>
+      </label>
+    </section>
+
+    <section class="group" id="grp-scenario">
+      <h2>测试轨迹</h2>
+      <select id="scenario-select"></select>
+      <div class="row">
+        <button id="btn-play" class="primary">播放</button>
+        <button id="btn-restart">重播</button>
+      </div>
+      <progress id="scenario-progress" max="1" value="0"></progress>
+      <div id="scenario-state" class="hint">—</div>
+    </section>
+
+    <section class="group">
+      <h2>镜头参数</h2>
+      <label class="slider">
+        <span>FOV <b id="fov-val">60°</b></span>
+        <input type="range" id="fov-range" min="35" max="95" value="60" />
+      </label>
+      <label class="slider">
+        <span>观察灵敏度 <b id="sens-val">1.0×</b></span>
+        <input type="range" id="sens-range" min="0.2" max="2.5" step="0.1" value="1" />
+      </label>
+      <label class="slider">
+        <span>臂长 <b id="boom-val">5.5m</b></span>
+        <input type="range" id="boom-range" min="2.5" max="12" step="0.1" value="5.5" />
+      </label>
+      <label class="toggle">
+        <input type="checkbox" id="ghost-toggle" />
+        <span>显示上一帧/当前帧视锥</span>
+      </label>
+    </section>
+
+    <section class="group">
+      <h2>角色</h2>
+      <div class="row">
+        <button id="btn-face-left">⟲ 左转 15°</button>
+        <button id="btn-face-right">⟳ 右转 15°</button>
+      </div>
+      <div class="kv"><span>角色朝向</span><code id="char-facing">—</code></div>
+      <div class="kv"><span>角色局部上</span><code id="char-up">—</code></div>
+      <p class="hint">角色朝向仅驱动模型与行走，不参与相机地平线解算。</p>
+    </section>
+
+    <section class="group">
+      <h2>记录</h2>
+      <div class="row">
+        <button id="btn-export">导出 JSON</button>
+        <button id="btn-reset">重置</button>
+      </div>
+      <div class="kv"><span>采样帧</span><code id="sample-count">0</code></div>
+    </section>
+  </aside>
+
+  <div class="anomaly-stack" id="anomaly-stack" aria-live="polite"></div>
+
+  <aside class="panel results">
+    <section class="group pose-group">
+      <h2>相机姿态 <small>实际解算</small></h2>
+      <div class="pose-grid">
+        <div><span>Forward</span><code id="v-forward">—</code></div>
+        <div><span>Up</span><code id="v-up">—</code></div>
+        <div><span>Right</span><code id="v-right">—</code></div>
+        <div><span>Quaternion</span><code id="v-quat">—</code></div>
+        <div><span>局部偏航</span><code id="v-yaw">—</code></div>
+        <div><span>局部俯仰</span><code id="v-pitch">—</code></div>
+        <div><span>重力上方向</span><code id="v-gup">—</code></div>
+        <div><span>水平线旋向</span><code id="v-mode">—</code></div>
+      </div>
+    </section>
+
+    <section class="group">
+      <h2>视野连续性 <small>逐帧</small></h2>
+      <div class="metrics">
+        <div class="metric"><span>正交误差</span><b id="m-ortho">—</b></div>
+        <div class="metric"><span>地平线滚转</span><b id="m-roll">—</b></div>
+        <div class="metric"><span>单帧姿态跳变</span><b id="m-step">—</b></div>
+        <div class="metric"><span>视锥重叠</span><b id="m-overlap">—</b></div>
+      </div>
+      <canvas id="chart" width="360" height="132"></canvas>
+      <div class="legend-row">
+        <span class="k-roll">滚转</span><span class="k-step">跳变</span><span class="k-overlap">重叠</span>
+      </div>
+      <div class="kv"><span>重力叉乘模 |f×u|</span><code id="m-sinhorizon">—</code></div>
+      <div class="kv"><span>后仰/前倾相对局部上</span><code id="m-elev">—</code></div>
+    </section>
+
+    <section class="group" id="lens-group">
+      <h2>重力镜头 <small>局部上方向 · 屏幕投影</small></h2>
+      <canvas id="lens" width="200" height="200"></canvas>
+      <p class="hint" id="lens-hint">圆环表示当前相机视图；黄点表示局部上方向在屏幕上的方位，虚线为局部地平线。</p>
+    </section>
+
+    <section class="group" id="summary-group">
+      <h2>轨迹判定 <small>同一解算器数值运行</small></h2>
+      <div id="summary" class="summary">选择“输入轨迹”并播放后显示。</div>
+    </section>
+  </aside>
+
+  <footer class="statusbar">
+    <span id="status-msg">拖拽以观察；WASD 行走。</span>
+    <span id="status-perf">—</span>
+  </footer>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

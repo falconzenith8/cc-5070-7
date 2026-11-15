@@ -1,0 +1,102 @@
+{
+  "generatedAt": "2026-11-15T07:15:06.619Z",
+  "note": "Numerical records from the same solver used by the Gravity Lens graphical demo.",
+  "runs": [
+    {
+      "scenario": "sphere-walk",
+      "label": "球面行走",
+      "file": "sphere-walk.json",
+      "frames": 900,
+      "pass": true,
+      "maxOrthoErrorDeg": 2.5444437451708134e-14,
+      "maxRollDeg": 4.491852054929981e-15,
+      "maxStepDeg": 0.3326433728068089,
+      "minFovOverlap": 1,
+      "modeCounts": {
+        "cross": 900,
+        "blend": 0,
+        "transport": 0
+      }
+    },
+    {
+      "scenario": "wall-turn",
+      "label": "墙面转向（地板→墙→顶部）",
+      "file": "wall-turn.json",
+      "frames": 600,
+      "pass": true,
+      "maxOrthoErrorDeg": 2.5444437451708134e-14,
+      "maxRollDeg": 9.306613551246026e-15,
+      "maxStepDeg": 1.251238896771754,
+      "minFovOverlap": 1,
+      "modeCounts": {
+        "cross": 600,
+        "blend": 0,
+        "transport": 0
+      }
+    },
+    {
+      "scenario": "pole-cross",
+      "label": "穿过极点（俯仰连续跨过天顶）",
+      "file": "pole-cross.json",
+      "frames": 720,
+      "pass": true,
+      "maxOrthoErrorDeg": 2.5444437451708134e-14,
+      "maxRollDeg": 6.57738469980445e-16,
+      "maxStepDeg": 1.555498538249108,
+      "minFovOverlap": 1,
+      "modeCounts": {
+        "cross": 720,
+        "blend": 0,
+        "transport": 0
+      }
+    },
+    {
+      "scenario": "pole-approach",
+      "label": "接近极点（俯仰限制 ±89.5°）",
+      "file": "pole-approach.json",
+      "frames": 720,
+      "pass": true,
+      "maxOrthoErrorDeg": 2.5444437451708134e-14,
+      "maxRollDeg": 1.592176401905825e-15,
+      "maxStepDeg": 0.7821114196384151,
+      "minFovOverlap": 1,
+      "modeCounts": {
+        "cross": 720,
+        "blend": 0,
+        "transport": 0
+      }
+    },
+    {
+      "scenario": "pole-dwell",
+      "label": "极点驻留（视线正对局部上方向）",
+      "file": "pole-dwell.json",
+      "frames": 600,
+      "pass": true,
+      "maxOrthoErrorDeg": 1.2722218725854067e-14,
+      "maxRollDeg": 1.5922828884429666e-15,
+      "maxStepDeg": 3.610651103994685,
+      "minFovOverlap": 0.9795918367346939,
+      "modeCounts": {
+        "cross": 420,
+        "blend": 0,
+        "transport": 180
+      }
+    },
+    {
+      "scenario": "gravity-flip",
+      "label": "重力 180° 翻转",
+      "file": "gravity-flip.json",
+      "frames": 240,
+      "pass": true,
+      "maxOrthoErrorDeg": 0,
+      "maxRollDeg": 0,
+      "maxStepDeg": 0,
+      "minFovOverlap": 1,
+      "modeCounts": {
+        "cross": 240,
+        "blend": 0,
+        "transport": 0
+      }
+    }
+  ]
+}
