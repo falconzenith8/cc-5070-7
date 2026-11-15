@@ -129,12 +129,16 @@
       </div>
       <div class="kv"><span>重力叉乘模 |f×u|</span><code id="m-sinhorizon">—</code></div>
       <div class="kv"><span>后仰/前倾相对局部上</span><code id="m-elev">—</code></div>
+      <div class="kv"><span>姿态更新成本</span><code id="m-cost">—</code></div>
+      <div class="kv"><span>姿态缓存</span><code id="m-cache">—</code></div>
+      <div id="continuity-badge" class="run-badge" hidden></div>
     </section>
 
     <section class="group" id="lens-group">
       <h2>重力镜头 <small>局部上方向 · 屏幕投影</small></h2>
       <canvas id="lens" width="200" height="200"></canvas>
       <p class="hint" id="lens-hint">圆环表示当前相机视图；黄点表示局部上方向在屏幕上的方位，虚线为局部地平线。</p>
+      <div id="lens-state" class="run-badge" hidden></div>
     </section>
 
     <section class="group" id="summary-group">

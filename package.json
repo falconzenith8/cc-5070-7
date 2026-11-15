@@ -11,7 +11,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "sim": "node src/sim/cli.js",
-    "sim:all": "node src/sim/cli.js --all --out artifacts"
+    "sim:all": "node src/sim/cli.js --all --out artifacts",
+    "bench": "node bench/pose-bench.mjs",
+    "bench:save": "node bench/pose-bench.mjs --save"
   },
   "dependencies": {
     "@fontsource/noto-sans-sc": "^5.3.1",

@@ -265,6 +265,23 @@ progress::-moz-progress-bar { background: var(--accent); }
 .summary .head { display: flex; justify-content: space-between; margin-bottom: 6px; color: var(--text); font-weight: 600; }
 .summary .detail { color: rgba(143, 160, 189, 0.75); font-family: var(--mono); font-size: 9.5px; }
 
+.run-badge {
+  margin-top: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(94, 132, 190, 0.2);
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.run-badge.ok { border-color: rgba(95, 224, 164, 0.45); color: var(--good); }
+.run-badge.warn { border-color: rgba(255, 191, 92, 0.5); color: var(--warn); }
+.run-badge.bad { border-color: rgba(255, 107, 107, 0.55); color: var(--bad); }
+.run-badge .tag { font-family: var(--mono); font-size: 10px; opacity: 0.8; margin-right: 6px; }
+.run-badge ul { margin: 4px 0 0; padding-left: 16px; }
+.run-badge li { margin: 2px 0; }
+
 .anomaly-stack {
   position: fixed;
   top: 72px;

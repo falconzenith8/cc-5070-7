@@ -38,6 +38,8 @@ const state = {
   lastAnomalyKeys: new Set(),
   ghost: false,
   bank: 0,
+  poseCostText: '—',
+  costAccum: 0,
 };
 
 const canvas = $('scene');
@@ -520,12 +522,117 @@ function updateReadouts(pose) {
   $('m-sinhorizon').textContent = pose.sinHorizon.toExponential(2);
   $('m-elev').textContent = `${(Math.asin(Math.max(-1, Math.min(1, dot(pose.forward, pose.gravityUp)))) * RAD2DEG).toFixed(2)}°`;
 
+  // Pose-update cost. A single solve is far below the ~0.1 ms performance.now()
+  // clamp, so timing one frame and printing it would report the clamp as the
+  // cost. Instead, time a small batch of the real solver (16 solves of the
+  // current input) once per half second and report microseconds per solve.
+  // This is measured work, not an inferred or hard-coded number.
+  $('m-cost').textContent = state.poseCostText;
+  const stats = rig.cacheStats;
+  $('m-cache').textContent = `${stats.hits} 命中 / ${stats.misses} 求解`;
+
+  updateContinuityBadge(pose);
+  updateLensState(pose);
+
   metricHistory.roll.push(pose.rollDeg ?? 0);
   metricHistory.step.push(pose.stepDeg ?? 0);
   metricHistory.overlap.push(pose.fovOverlap == null ? 1 : pose.fovOverlap);
   for (const k of Object.keys(metricHistory)) {
     if (metricHistory[k].length > 220) metricHistory[k].shift();
   }
+}
+
+/**
+ * Measure the real pose-update cost on a dedicated rig, so the live demo rig's
+ * yaw/pitch/history are never disturbed. A tiny alternating yaw delta forces
+ * every timed solve to miss the exact-input cache, so the number reflects the
+ * full update path (the same `fullStep` the benchmark reports), not a cache
+ * hit.
+ *
+ * Chromium quantises performance.now() to ~0.1 ms, so a small batch can only
+ * report multiples of (0.1 ms / N) — 16 steps would move in 6.25 µs jumps and
+ * a scheduler blip reads as tens of µs. The batch is therefore sized so one
+ * clock tick is a fraction of a microsecond per step, and the fastest of
+ * several passes is reported: scheduling noise can only add time, never
+ * subtract it. Returns null when even that cannot be resolved.
+ */
+const COST_BATCH = 384;
+const COST_PASSES = 2;
+const COST_ROLLING = 6;
+const costRig = new GravityCameraRig({ seedUp: v3(0, 1, 0), allowPoleCrossing: true });
+const costHistory = [];
+function measureSolveCost() {
+  let bestMs = Infinity;
+  for (let pass = 0; pass < COST_PASSES; pass += 1) {
+    const t0 = performance.now();
+    for (let i = 0; i < COST_BATCH; i += 1) {
+      costRig.step({ gravityUp: state.gravityUp, dYaw: (i % 2 ? -1 : 1) * 1e-3, dPitch: 0 });
+    }
+    const ms = performance.now() - t0;
+    if (ms > 0 && ms < bestMs) bestMs = ms;
+  }
+  if (!Number.isFinite(bestMs)) return null;
+  const us = (bestMs * 1000) / COST_BATCH;
+  costHistory.push(us);
+  if (costHistory.length > COST_ROLLING) costHistory.shift();
+  // Rolling minimum across recent batches: a scheduler blip can only inflate a
+  // pass, so the smallest recent per-step cost is the closest to real work.
+  const floorUs = Math.min(...costHistory);
+  return `${floorUs.toFixed(1)} µs/次求解（整步）`;
+}
+
+/**
+ * Live camera-pose / view-continuity status. The badge names the specific
+ * anomaly codes it is reporting instead of a generic "ok", so a reader can tie
+ * it back to the metrics above and to the toast stack.
+ */
+function updateContinuityBadge(pose) {
+  const el = $('continuity-badge');
+  const warns = pose.anomalies.filter((a) => a.level !== 'info');
+  const infos = pose.anomalies.filter((a) => a.level === 'info');
+  const metricBad = pose.orthoErrorDeg > rig.limits.orthoErrorDeg
+    || (pose.rollDeg != null && Math.abs(pose.rollDeg) > rig.limits.rollDeg)
+    || (pose.stepDeg != null && pose.stepDeg > rig.limits.stepDeg)
+    || (pose.fovOverlap != null && pose.fovOverlap < rig.limits.fovOverlap);
+  if (metricBad || warns.length) {
+    el.className = 'run-badge bad';
+    const items = warns.length
+      ? warns.map((a) => `${a.code}: ${a.message}`)
+      : ['姿态指标超出验收阈值'];
+    el.innerHTML = `<span class="tag">CONFIG</span>相机姿态 / 视野连续性异常<ul>${items.map((t) => `<li>${t}</li>`).join('')}</ul>`;
+  } else if (infos.length) {
+    el.className = 'run-badge warn';
+    el.innerHTML = `<span class="tag">RUN</span>相机姿态与视野连续 · 回退中<ul>${infos.slice(0, 2).map((a) => `<li>${a.code}: ${a.message}</li>`).join('')}</ul>`;
+  } else {
+    el.className = 'run-badge ok';
+    el.innerHTML = `<span class="tag">RUN</span>相机姿态与视野连续正常 · 单帧跳变 ${pose.stepDeg == null ? '—' : `${pose.stepDeg.toFixed(3)}°`} · 视锥重叠 ${pose.fovOverlap == null ? '—' : `${(pose.fovOverlap * 100).toFixed(1)}%`}`;
+  }
+  el.hidden = false;
+}
+
+/** Gravity-lens status: whether the local up is projectable and where it sits. */
+function updateLensState(pose) {
+  const el = $('lens-state');
+  const sinElev = dot(pose.forward, pose.gravityUp);
+  const elevDeg = Math.asin(Math.max(-1, Math.min(1, sinElev))) * RAD2DEG;
+  // Degeneracy is the solver's own verdict, not a hand-picked cosine: a null
+  // roll means the horizon projection collapsed, and a non-cross solve mode
+  // means the carried frame took over. Near the pole but still inside `cross`
+  // is reported as exactly that, so nothing is mislabelled.
+  if (pose.rollDeg == null || pose.solveMode === SolveMode.TRANSPORT) {
+    el.className = 'run-badge warn';
+    el.innerHTML = `<span class="tag">LENS</span>视线正对局部上方向（仰角 ${elevDeg.toFixed(2)}°，|f×u| ${pose.sinHorizon.toExponential(1)}）：地平线退化，沿用 ${pose.solveMode} 连续回退`;
+  } else if (pose.solveMode === SolveMode.BLEND) {
+    el.className = 'run-badge warn';
+    el.innerHTML = `<span class="tag">LENS</span>进入极点退化带（|f×u| ${pose.sinHorizon.toExponential(1)}）：cross/blend 权重 ${(pose.blendWeight * 100).toFixed(0)}%`;
+  } else if (pose.sinHorizon < 1e-2) {
+    el.className = 'run-badge warn';
+    el.innerHTML = `<span class="tag">LENS</span>接近极点但仍在 cross 带（仰角 ${elevDeg.toFixed(2)}°，|f×u| ${pose.sinHorizon.toExponential(1)}）：地平线仍由叉乘锁定，滚转 ${pose.rollDeg.toFixed(2)}°`;
+  } else {
+    el.className = 'run-badge ok';
+    el.innerHTML = `<span class="tag">LENS</span>局部上方向可见 · 视线仰角 ${elevDeg.toFixed(2)}° · 模式 ${pose.solveMode} · 地平线滚转 ${pose.rollDeg.toFixed(2)}°`;
+  }
+  el.hidden = false;
 }
 
 function drawChart() {
@@ -848,6 +955,13 @@ function tick() {
   updateCharacter(dt);
 
   updateGhosts(camPos, poseForView);
+  state.costAccum += dt;
+  if (state.costAccum > 0.5) {
+    state.costAccum = 0;
+    const measured = measureSolveCost();
+    // Keep the last valid reading if this batch fell below clock resolution.
+    if (measured) state.poseCostText = measured;
+  }
   updateReadouts(poseForView);
   publishAnomalies(poseForView);
   drawChart();

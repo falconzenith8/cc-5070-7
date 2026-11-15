@@ -252,6 +252,7 @@ export function runScenario(scenario, options = {}) {
       blendWeight: pose.blendWeight,
       orthoErrorDeg: pose.orthoErrorDeg,
       rollDeg: pose.rollDeg,
+      horizonInverted: pose.horizonInverted,
       stepDeg: pose.stepDeg,
       fovOverlap: pose.fovOverlap,
       discontinuity: pose.discontinuity ?? null,

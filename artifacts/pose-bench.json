@@ -1,0 +1,162 @@
+{
+  "generatedAt": "2026-11-15T16:50:31.842Z",
+  "note": "Both rigs executed for real; timings are medians of alternating runs. Components timed in isolation per round, then medianed.",
+  "env": {
+    "note": "Synthetic micro-benchmark on a shared machine; round ranges show the noise band, not a guarantee.",
+    "loadavgAtEnd": 4.62,
+    "cpuCount": 10
+  },
+  "results": [
+    {
+      "id": "slow-gravity",
+      "frames": 12000,
+      "baselineUsPerFrame": 4.700882,
+      "optimizedUsPerFrame": 2.496635416666667,
+      "speedup": 1.9799964843780384,
+      "speedupRounds": [
+        1.67,
+        1.87,
+        1.98,
+        2.03,
+        2.06
+      ],
+      "speedupRange": {
+        "min": 1.67,
+        "max": 2.06
+      },
+      "angleError": {
+        "maxStepDegBaseline": 0.024452574986621782,
+        "maxStepDegOptimized": 0.024452574986621782,
+        "maxOrthoErrorDegBaseline": 2.5444437451708134e-14,
+        "maxOrthoErrorDegOptimized": 2.5444437451708134e-14,
+        "maxRollDegBaseline": 2.027034497377474e-14,
+        "maxRollDegOptimized": 2.027034497377474e-14
+      },
+      "solveModes": {
+        "transportBaseline": 0,
+        "transportOptimized": 0,
+        "blendBaseline": 0,
+        "blendOptimized": 0
+      },
+      "finalPoseDeltaDeg": 0
+    },
+    {
+      "id": "reversed-axis",
+      "frames": 12000,
+      "baselineUsPerFrame": 3.9346145833333335,
+      "optimizedUsPerFrame": 2.5863229166666666,
+      "speedup": 1.8971685171477917,
+      "speedupRounds": [
+        1.42,
+        1.48,
+        1.9,
+        2.06,
+        2.57
+      ],
+      "speedupRange": {
+        "min": 1.42,
+        "max": 2.57
+      },
+      "angleError": {
+        "maxStepDegBaseline": 0.04682874803442636,
+        "maxStepDegOptimized": 0.04682874803442636,
+        "maxOrthoErrorDegBaseline": 2.5444437451708134e-14,
+        "maxOrthoErrorDegOptimized": 2.5444437451708134e-14,
+        "maxRollDegBaseline": 0.3540531500802515,
+        "maxRollDegOptimized": 0.3540531500802515
+      },
+      "solveModes": {
+        "transportBaseline": 10,
+        "transportOptimized": 10,
+        "blendBaseline": 90,
+        "blendOptimized": 90
+      },
+      "finalPoseDeltaDeg": 0
+    },
+    {
+      "id": "slow-gravity-idle-look",
+      "frames": 12000,
+      "baselineUsPerFrame": 4.086604166666667,
+      "optimizedUsPerFrame": 2.6686319166666665,
+      "speedup": 1.5383065607358164,
+      "speedupRounds": [
+        1.47,
+        1.53,
+        1.54,
+        1.64,
+        2.06
+      ],
+      "speedupRange": {
+        "min": 1.47,
+        "max": 2.06
+      },
+      "angleError": {
+        "maxStepDegBaseline": 0.0068408257387534204,
+        "maxStepDegOptimized": 0.0068408257387534204,
+        "maxOrthoErrorDegBaseline": 2.5444437451708134e-14,
+        "maxOrthoErrorDegOptimized": 2.5444437451708134e-14,
+        "maxRollDegBaseline": 1.641380826387134e-14,
+        "maxRollDegOptimized": 1.641380826387134e-14
+      },
+      "solveModes": {
+        "transportBaseline": 0,
+        "transportOptimized": 0,
+        "blendBaseline": 0,
+        "blendOptimized": 0
+      },
+      "finalPoseDeltaDeg": 0
+    },
+    {
+      "id": "idle",
+      "frames": 12000,
+      "baselineUsPerFrame": 4.0841804999999995,
+      "optimizedUsPerFrame": 0.6647708333333333,
+      "speedup": 6.24794462042211,
+      "speedupRounds": [
+        5.46,
+        5.74,
+        6.25,
+        6.43,
+        7
+      ],
+      "speedupRange": {
+        "min": 5.46,
+        "max": 7
+      },
+      "angleError": {
+        "maxStepDegBaseline": 0,
+        "maxStepDegOptimized": 0,
+        "maxOrthoErrorDegBaseline": 3.975693351829396e-16,
+        "maxOrthoErrorDegOptimized": 3.975693351829396e-16,
+        "maxRollDegBaseline": 8.694628318651721e-16,
+        "maxRollDegOptimized": 8.694628318651721e-16
+      },
+      "solveModes": {
+        "transportBaseline": 0,
+        "transportOptimized": 0,
+        "blendBaseline": 0,
+        "blendOptimized": 0
+      },
+      "finalPoseDeltaDeg": 0
+    }
+  ],
+  "costBreakdown": {
+    "fullStepUs": 2.144275,
+    "fullStepRangeUs": {
+      "min": 1.9689581999999999,
+      "max": 3.2836165999999998
+    },
+    "remainderUs": 1.1380570800000003,
+    "components": {
+      "solveGeometryUs": 0.80704583,
+      "frustumOverlapUs": 0.18152709,
+      "detectAnomaliesUs": 0.017645
+    },
+    "shareOfFullStep": {
+      "solveGeometry": 0.3763723542922433,
+      "frustumOverlap": 0.08465662753145002,
+      "detectAnomalies": 0.00822888855207471,
+      "remainder": 0.5307421296242321
+    }
+  }
+}
